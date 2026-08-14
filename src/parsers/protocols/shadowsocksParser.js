@@ -14,6 +14,11 @@ function parseServer(serverPart) {
  * @param {string} pluginStr - The plugin parameter value (URL decoded)
  * @returns {{plugin: string, plugin_opts: object}|null} - Parsed plugin info or null
  */
+// v2ray-plugin opts that mihomo expects as booleans. SIP003 encodes them as
+// "0"/"1"; carrying that string into plugin-opts yields `mux: '0'` which
+// mihomo rejects. Keep everything else (mode, host, path, headers, ...) as-is.
+const BOOL_PLUGIN_OPTS = new Set(['tls', 'mux', 'v2ray-http-upgrade', 'skip-cert-verify', 'name-cert-verify']);
+
 function parsePluginString(pluginStr) {
     if (!pluginStr) return null;
 
@@ -39,14 +44,14 @@ function parsePluginString(pluginStr) {
             // Map SIP003 parameter names to Clash plugin-opts format
             // simple-obfs parameters: obfs -> mode, obfs-host -> host
             // v2ray-plugin parameters: mode, host, path, tls, etc.
-            if (key === 'obfs') {
-                opts.mode = value;
-            } else if (key === 'obfs-host') {
-                opts.host = value;
-            } else if (key === 'obfs-uri') {
-                opts.path = value;
+            const mappedKey = key === 'obfs' ? 'mode'
+                : key === 'obfs-host' ? 'host'
+                : key === 'obfs-uri' ? 'path'
+                : key;
+            if (BOOL_PLUGIN_OPTS.has(mappedKey)) {
+                opts[mappedKey] = value === 'true' || value === '1';
             } else {
-                opts[key] = value;
+                opts[mappedKey] = value;
             }
         }
     }
