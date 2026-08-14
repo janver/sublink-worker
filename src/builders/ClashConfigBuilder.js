@@ -197,6 +197,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     tls: proxy.tls?.enabled || false,
                     'client-fingerprint': proxy.tls?.utls?.fingerprint,
                     servername: proxy.tls?.server_name || '',
+                    ...(proxy.tls?.server_name ? { sni: proxy.tls.server_name } : {}),
                     network: proxy.transport?.type || 'tcp',
                     'ws-opts': proxy.transport?.type === 'ws' ? {
                         path: proxy.transport.path,
@@ -209,8 +210,14 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     'grpc-opts': proxy.transport?.type === 'grpc' ? {
                         'grpc-service-name': proxy.transport.service_name,
                     } : undefined,
+                    'xhttp-opts': proxy.transport?.type === 'xhttp' ? {
+                        path: proxy.transport.path,
+                        host: proxy.transport.host,
+                        headers: proxy.transport.headers,
+                        mode: proxy.transport.mode,
+                    } : undefined,
                     tfo: proxy.tcp_fast_open,
-                    'skip-cert-verify': !!proxy.tls?.insecure,
+                    ...(proxy.tls?.insecure ? { 'skip-cert-verify': true } : {}),
                     udp: getClashUdpValue(proxy),
                     ...(proxy.alpn ? { alpn: proxy.alpn } : {}),
                     ...(proxy.packet_encoding ? { 'packet-encoding': proxy.packet_encoding } : {}),

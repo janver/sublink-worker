@@ -292,12 +292,17 @@ export function createTlsConfig(params) {
 		tls = {
 			enabled: true,
 			server_name: params.sni || params.host,
-			insecure: !!params?.allowInsecure || !!params?.insecure || !!params?.allow_insecure,
-			// utls: {
-			//   enabled: true,
-			//   fingerprint: "chrome"
-			// },
+			insecure: parseBool(params.allowInsecure)
+				?? parseBool(params.insecure)
+				?? parseBool(params.allow_insecure)
+				?? false,
 		};
+		if (params.fp) {
+			tls.utls = {
+				enabled: true,
+				fingerprint: params.fp,
+			};
+		}
 		if (params.security === 'reality') {
 			tls.reality = {
 				enabled: true,
@@ -310,7 +315,7 @@ export function createTlsConfig(params) {
 }
 
 export function createTransportConfig(params) {
-	return {
+	const transport = {
 		type: params.type,
 		path: params.path ?? undefined,
 		...(params.host && { 'headers': { 'host': params.host } }),
@@ -318,6 +323,19 @@ export function createTransportConfig(params) {
 			service_name: params.serviceName ?? undefined,
 		})
 	};
+
+	if (params.type === 'xhttp') {
+		return {
+			...transport,
+			...(params.host && {
+				host: params.host,
+				headers: { Host: params.host },
+			}),
+			...(params.mode && { mode: params.mode }),
+		};
+	}
+
+	return transport;
 }
 
 // Parse boolean value from various formats
