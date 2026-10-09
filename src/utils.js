@@ -270,7 +270,11 @@ export function parseServerInfo(serverInfo) {
 }
 
 export function parseUrlParams(url) {
-	const [, rest] = url.split('://');
+	// Only the first separator delimits the authority: a `path` parameter may
+	// itself carry a "://" (e.g. /turn://host:3478), so splitting on every
+	// occurrence would truncate the parameters and the fragment.
+	const schemeIndex = url.indexOf('://');
+	const rest = schemeIndex === -1 ? url : url.slice(schemeIndex + 3);
 	const [addressPart, ...remainingParts] = rest.split('?');
 	const paramsPart = remainingParts.join('?');
 

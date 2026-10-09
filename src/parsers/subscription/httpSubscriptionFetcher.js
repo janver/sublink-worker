@@ -73,9 +73,16 @@ function decodeContent(text) {
     }
 
     try {
-        const decodedText = decodeUriComponentIfNeeded(decodeBase64(base64Candidate));
+        const decodedText = decodeBase64(base64Candidate).trim();
         if (isPlainSubscriptionContent(decodedText)) {
             return decodedText;
+        }
+
+        // Only a payload that is not yet a subscription gets URL-decoded: applying
+        // it to plaintext URIs would strip the percent-encoding of their parameters.
+        const fullyDecodedText = decodeUriComponentIfNeeded(decodedText);
+        if (isPlainSubscriptionContent(fullyDecodedText)) {
+            return fullyDecodedText;
         }
     } catch (e) {
         return urlDecodedText;
